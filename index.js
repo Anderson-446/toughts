@@ -7,6 +7,57 @@ const flash = require('express-flash')
 const app = express()
 const conn = require('./db/conn.js')
 
+
+// Models
+const Tought = require("./models/Tought.js")
+const User = require("./models/User.js")
+//template engine
+app.engine('handlebars', exphbs.engine())
+app.set('view engine', 'handlebars')
+
+//public path
+app.use(express.static('public'))
+
+//receber respostas do body
+app.use(
+    express.urlencoded({
+        extended: true
+    })
+)
+
+app.use(express.json())
+
+//session middleware
+app.use(
+    session({
+        name: "session",
+        secret: 'nosso_secret',
+        resave: false,
+        saveUninitialized: false,
+        store: new FileStore({
+            logFn: function() {},
+            path: require('path').join(require('os').tmpdir(), 'sessions'),
+        }),
+        cookie: {
+            secure: false,
+            maxAge:360000,
+            expres: new Date(Date.now() + 360000),
+            httpOnly: true
+        }
+    }),
+)
+
+// flash messages
+app.use(flash())
+
+//set sesstion to res
+app.use((req, res, next) => {
+    if(req.session.userid) {
+        res.locals.session = req.session
+    }
+    next()
+})
+
 async function startServer() {
     try {
         await conn.sync();
